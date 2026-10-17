@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MAGLEV | The Train That Floats</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#050b1d;color:white;font-family:Arial,sans-serif;overflow:hidden}#stage{position:fixed;inset:0}#ui{position:absolute;left:5%;top:7%;pointer-events:none}h1{font-size:clamp(30px,5vw,72px);margin:0;letter-spacing:.08em;text-shadow:0 0 22px #21c9ff}p{font-size:clamp(14px,1.7vw,23px);color:#b8eaff;max-width:550px}#bottom{position:absolute;bottom:5%;left:5%;right:5%;display:flex;align-items:center;justify-content:space-between;gap:12px}button{background:#12365a;color:#fff;border:1px solid #55dfff;padding:12px 20px;border-radius:24px;cursor:pointer;font-weight:bold}button:hover{background:#24669b}.tag{font-size:13px;color:#b9e4ff;background:#0c213bbd;border:1px solid #4bc8ff88;padding:12px;border-radius:12px}#error{position:absolute;top:40%;left:10%;right:10%;text-align:center;color:#fff;background:#521c2c;padding:20px;display:none}
+</style>
+</head>
+<body><div id="stage"></div><div id="ui"><h1>MAGLEV</h1><p>THE TRAIN THAT FLOATS</p><p id="subtitle">Magnetic levitation • Electromagnetic propulsion</p></div><div id="bottom"><button id="pause">⏸ Pause</button><div class="tag">GRADE 12 PHYSICS · 3D SCIENCE ANIMATION</div><button id="view">Change camera ↻</button></div><div id="error"></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x061127);scene.fog=new THREE.FogExp2(0x061127,.009);
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,1000);const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;document.querySelector('#stage').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0x9ddfff,0x08101d,2.2));const sun=new THREE.DirectionalLight(0xffffff,3);sun.position.set(-10,25,30);scene.add(sun);
+function box(w,h,d,color,metal=.3,rough=.45){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,metalness:metal,roughness:rough}))}
+function add(o,x,y,z,parent=scene){o.position.set(x,y,z);parent.add(o);return o}
+const ground=add(box(220,.2,400,0x0b1a2e),0,-3,0);const guide=add(box(6,.6,350,0x56677c,.75),0,-.65,0);add(box(4,.18,350,0x111b35,.6),0,-.24,0);
+for(let z=-165;z<=165;z+=8){add(box(.35,.25,5,0x19cfff,.4),-2.4,-.02,z);add(box(.35,.25,5,0x19cfff,.4),2.4,-.02,z);add(box(8,2.2,.5,0x223c59),0,-2,z)}
+const train=new THREE.Group();scene.add(train);
+const hull=add(box(4,2.2,21,0xe6f7ff,.5,.22),0,1.85,0,train);const roof=add(box(3.2,.4,17,0xd4eaff,.45),0,3.1,0,train);
+add(box(4.1,.38,17,0x118fff,.4),0,1.35,0,train);add(box(4.12,.16,17,0x0de5ff,.3),0,1.02,0,train);
+for(let side of [-1,1]){add(box(.06,.75,14,0x092846,.15,.1),side*2.04,2.25,0,train);for(let z=-6;z<=6;z+=3.5)add(box(.07,.6,.08,0x83eaff),side*2.08,2.25,z,train)}
+for(let sign of [-1,1]){let nose=add(new THREE.Mesh(new THREE.ConeGeometry(1.7,5,32),new THREE.MeshStandardMaterial({color:0xe6f7ff,metalness:.4,roughness:.25})),0,1.9,sign*12.7,train);nose.rotation.x=sign*Math.PI/2;add(box(2,.2,.08,0x00dfff),0,1.5,sign*14.7,train)}
+const glows=[];for(let i=0;i<24;i++){let light=add(new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),new THREE.MeshBasicMaterial({color:0x36ddff})),(i%2?1:-1)*2.4,.2,-11+i,train);glows.push(light)}
+const particles=[];for(let i=0;i<110;i++){const p=add(new THREE.Mesh(new THREE.SphereGeometry(.035,6,6),new THREE.MeshBasicMaterial({color:0x2ecfff})),(Math.random()-.5)*11,Math.random()*4-1,(Math.random()-.5)*160);particles.push(p)}
+let paused=false,view=0,time=0;document.querySelector('#pause').onclick=()=>{paused=!paused;document.querySelector('#pause').textContent=paused?'▶ Play':'⏸ Pause'};document.querySelector('#view').onclick=()=>view=(view+1)%3;
+const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused)time+=dt;train.position.y=Math.sin(time*2)*.13;train.position.z=Math.sin(time*.2)*22;glows.forEach((g,i)=>g.scale.setScalar(1+.8*Math.sin(time*7-i*.65)**2));particles.forEach((p,i)=>{if(!paused){p.position.z+=dt*(12+i%7);if(p.position.z>85)p.position.z=-85}});
+let target=view===0?new THREE.Vector3(17,10,35):view===1?new THREE.Vector3(0,8,45):new THREE.Vector3(29,5,-20);camera.position.lerp(target,.025);camera.lookAt(0,1.7,train.position.z);renderer.render(scene,camera)}animate();window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
